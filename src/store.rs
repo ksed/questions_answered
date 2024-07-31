@@ -1,10 +1,10 @@
-use tokio::sync::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 
 use crate::types::{
     answer::{Answer, AnswerId},
-    question::{Question, QuestionId}
+    question::{Question, QuestionId},
 };
 
 #[derive(Clone)]
@@ -26,4 +26,3 @@ impl Store {
         serde_json::from_str(file).expect("Can't initialize app by reading questions.json.")
     }
 }
-

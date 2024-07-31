@@ -1,8 +1,10 @@
-use warp::reject::Reject;
-use warp::{Rejection, Reply};
+#![warn(clippy::all)]
+
 use warp::body::BodyDeserializeError;
 use warp::cors::CorsForbidden;
 use warp::http::StatusCode;
+use warp::reject::Reject;
+use warp::{Rejection, Reply};
 
 #[derive(Debug)]
 pub enum Error {
@@ -18,8 +20,13 @@ impl std::fmt::Display for Error {
         match *self {
             Error::ParseError(ref err) => write!(f, "Can't parse parameter: {}.", err),
             Error::MissingParameters => write!(f, "Missing parameter."),
-            Error::ParametersOutOfRange => write!(f, "Your start and/or end value was not found in the store records."),
-            Error::SequencingError => write!(f, "You starting value must be less than the end value."),
+            Error::ParametersOutOfRange => write!(
+                f,
+                "Your start and/or end value was not found in the store records."
+            ),
+            Error::SequencingError => {
+                write!(f, "You starting value must be less than the end value.")
+            }
             Error::QuestionNotFound => write!(f, "Question was not found."),
         }
     }
@@ -39,10 +46,10 @@ pub async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
             error.to_string(),
             StatusCode::FORBIDDEN,
         ))
-    } else if let Some(error) = r.find::<BodyDeserializeError>(){
+    } else if let Some(error) = r.find::<BodyDeserializeError>() {
         Ok(warp::reply::with_status(
             error.to_string(),
-            StatusCode::UNPROCESSABLE_ENTITY
+            StatusCode::UNPROCESSABLE_ENTITY,
         ))
     } else {
         Ok(warp::reply::with_status(

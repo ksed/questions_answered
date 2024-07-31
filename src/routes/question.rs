@@ -1,14 +1,14 @@
-use std::collections::HashMap;
-use warp::{Rejection, Reply};
-use warp::http::StatusCode;
-use handle_errors::Error;
 use crate::store::Store;
 use crate::types::pagination::{extract_pagination, Pagination};
 use crate::types::question::{Question, QuestionId};
+use handle_errors::Error;
+use std::collections::HashMap;
+use warp::http::StatusCode;
+use warp::{Rejection, Reply};
 
 fn check_bounds(mut bounds: Pagination, curr_len: i32) -> Result<Pagination, Error> {
-    if bounds.start < 1 || bounds.end < 1  || bounds.start as i32 > curr_len {
-        return Err(Error::ParametersOutOfRange)
+    if bounds.start < 1 || bounds.end < 1 || bounds.start as i32 > curr_len {
+        return Err(Error::ParametersOutOfRange);
     } else if bounds.start > bounds.end {
         return Err(Error::SequencingError);
     } else if bounds.end as i32 > curr_len {
@@ -20,14 +20,14 @@ fn check_bounds(mut bounds: Pagination, curr_len: i32) -> Result<Pagination, Err
     Ok(bounds)
 }
 
-pub async fn get_questions(params: HashMap<String, String>, store: Store) -> Result<impl Reply, Rejection> {
+pub async fn get_questions(
+    params: HashMap<String, String>,
+    store: Store,
+) -> Result<impl Reply, Rejection> {
     let res: Vec<Question> = store.questions.read().await.values().cloned().collect();
 
     if !params.is_empty() {
-        let pagination = check_bounds(
-            extract_pagination(params)?,
-            res.len() as i32
-        )?;
+        let pagination = check_bounds(extract_pagination(params)?, res.len() as i32)?;
         let res = &res[pagination.start..pagination.end];
         Ok(warp::reply::json(&res))
     } else {
@@ -36,15 +36,20 @@ pub async fn get_questions(params: HashMap<String, String>, store: Store) -> Res
 }
 
 pub async fn add_question(store: Store, question: Question) -> Result<impl Reply, Rejection> {
-    store.questions.write().await.insert(question.id.clone(), question);
+    store
+        .questions
+        .write()
+        .await
+        .insert(question.id.clone(), question);
 
-    Ok(warp::reply::with_status(
-        "Question added.",
-        StatusCode::OK,
-    ))
+    Ok(warp::reply::with_status("Question added.", StatusCode::OK))
 }
 
-pub async fn update_question(id: String, store: Store, question: Question) -> Result<impl Reply, Rejection> {
+pub async fn update_question(
+    id: String,
+    store: Store,
+    question: Question,
+) -> Result<impl Reply, Rejection> {
     match store.questions.write().await.get_mut(&QuestionId(id)) {
         Some(q) => *q = question,
         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
@@ -57,13 +62,11 @@ pub async fn update_question(id: String, store: Store, question: Question) -> Re
 }
 
 pub async fn delete_question(id: String, store: Store) -> Result<impl Reply, Rejection> {
-    return match store.questions.write().await.remove(&QuestionId(id)) {
-        Some(_) => {
-            Ok(warp::reply::with_status(
-                "Question deleted.",
-                StatusCode::OK
-            ))
-        },
+    match store.questions.write().await.remove(&QuestionId(id)) {
+        Some(_) => Ok(warp::reply::with_status(
+            "Question deleted.",
+            StatusCode::OK,
+        )),
         None => Err(warp::reject::custom(Error::QuestionNotFound)),
     }
 }
