@@ -3,6 +3,7 @@ use crate::types::pagination::{extract_pagination, Pagination};
 use crate::types::question::{Question, QuestionId};
 use handle_errors::Error;
 use std::collections::HashMap;
+use tracing::{info, instrument};
 use warp::http::StatusCode;
 use warp::{Rejection, Reply};
 
@@ -20,17 +21,21 @@ fn check_bounds(mut bounds: Pagination, curr_len: i32) -> Result<Pagination, Err
     Ok(bounds)
 }
 
+#[instrument]
 pub async fn get_questions(
     params: HashMap<String, String>,
     store: Store,
 ) -> Result<impl Reply, Rejection> {
+    info!("querying questions");
     let res: Vec<Question> = store.questions.read().await.values().cloned().collect();
 
     if !params.is_empty() {
         let pagination = check_bounds(extract_pagination(params)?, res.len() as i32)?;
+        info!(pagination = true);
         let res = &res[pagination.start..pagination.end];
         Ok(warp::reply::json(&res))
     } else {
+        info!(pagination = false);
         Ok(warp::reply::json(&res))
     }
 }
