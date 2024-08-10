@@ -3,7 +3,7 @@
 extern crate core;
 use handle_errors::return_error;
 use tracing_subscriber::fmt::format::FmtSpan;
-use warp::{http::Method, Filter, cors, method};
+use warp::{http::Method, Filter};
 
 mod routes;
 mod store;
@@ -13,9 +13,11 @@ mod types;
 #[tokio::main]
 async fn main() {
     let log_filter = std::env::var("RUST_LOG")
-        .unwrap_or_else(|_| "questions_answered=info,warp::error".to_owned());
+        .unwrap_or_else(|_| "questions_answered=warn,warp=warn".to_owned());
 
-    let store = store::Store::new();
+    let store = store::Store::new(
+        "postgres://postgres:ksedrocks@localhost:5432/qa_db",
+    ).await;
     let store_filter = warp::any().map(move || store.clone());
 
     tracing_subscriber::fmt()
@@ -55,7 +57,7 @@ async fn main() {
 
     let update_question = warp::put()
         .and(warp::path("questions"))
-        .and(warp::path::param::<String>())
+        .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(store_filter.clone())
         .and(warp::body::json())
@@ -63,7 +65,7 @@ async fn main() {
 
     let delete_question = warp::delete()
         .and(warp::path("questions"))
-        .and(warp::path::param::<String>())
+        .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(store_filter.clone())
         .and_then(routes::question::delete_question);

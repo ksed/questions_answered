@@ -5,6 +5,7 @@ use warp::cors::CorsForbidden;
 use warp::http::StatusCode;
 use warp::reject::Reject;
 use warp::{Rejection, Reply};
+use sqlx::error::Error as SqlxError;
 
 #[derive(Debug)]
 pub enum Error {
@@ -13,11 +14,12 @@ pub enum Error {
     ParametersOutOfRange,
     SequencingError,
     QuestionNotFound,
+    DatabaseQueryError(SqlxError),
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match *self {
+        match self {
             Error::ParseError(ref err) => write!(f, "Can't parse parameter: {}.", err),
             Error::MissingParameters => write!(f, "Missing parameter."),
             Error::ParametersOutOfRange => write!(
@@ -28,6 +30,7 @@ impl std::fmt::Display for Error {
                 write!(f, "You starting value must be less than the end value.")
             }
             Error::QuestionNotFound => write!(f, "Question was not found."),
+            Error::DatabaseQueryError(e) => write!(f, "Query could not be executed: {}", e),
         }
     }
 }
