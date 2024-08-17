@@ -5,44 +5,38 @@ use warp::cors::CorsForbidden;
 use warp::http::StatusCode;
 use warp::reject::Reject;
 use warp::{Rejection, Reply};
-use sqlx::error::Error as SqlxError;
+use tracing::{event, Level, instrument};
 
 #[derive(Debug)]
 pub enum Error {
     ParseError(std::num::ParseIntError),
     MissingParameters,
-    ParametersOutOfRange,
-    SequencingError,
-    QuestionNotFound,
-    DatabaseQueryError(SqlxError),
+    DatabaseQueryError,
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::ParseError(ref err) => write!(f, "Can't parse parameter: {}.", err),
-            Error::MissingParameters => write!(f, "Missing parameter."),
-            Error::ParametersOutOfRange => write!(
-                f,
-                "Your start and/or end value was not found in the store records."
-            ),
-            Error::SequencingError => {
-                write!(f, "You starting value must be less than the end value.")
-            }
-            Error::QuestionNotFound => write!(f, "Question was not found."),
-            Error::DatabaseQueryError(e) => write!(f, "Query could not be executed: {}", e),
+            Error::ParseError(ref err) =>
+                write!(f, "Can't parse parameter: {}.", err),
+            Error::MissingParameters =>
+                write!(f, "Missing parameter."),
+            Error::DatabaseQueryError =>
+                write!(f, "Cannot update, invalid data."),
         }
     }
 }
 
 impl Reject for Error {}
 
+#[instrument]
 pub async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
     println!("Bad Request: {:?}.", r);
-    if let Some(error) = r.find::<Error>() {
+    if let Some(crate::Error::DatabaseQueryError) = r.find() {
+        event!(Level::ERROR, "Database query error.");
         Ok(warp::reply::with_status(
-            error.to_string(),
-            StatusCode::RANGE_NOT_SATISFIABLE,
+            crate::Error::DatabaseQueryError.to_string(),
+            StatusCode::UNPROCESSABLE_ENTITY
         ))
     } else if let Some(error) = r.find::<CorsForbidden>() {
         Ok(warp::reply::with_status(

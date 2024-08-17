@@ -12,12 +12,18 @@ mod types;
 // ```powershell -Command {$env:RUST_LOG="INFO"; cargo run }```
 #[tokio::main]
 async fn main() {
-    let log_filter = std::env::var("RUST_LOG")
-        .unwrap_or_else(|_| "questions_answered=warn,warp=warn".to_owned());
+    let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_|
+        "handle_errors=warn,questions_answered=info,warp=error".to_owned());
 
     let store = store::Store::new(
         "postgres://postgres:ksedrocks@localhost:5432/qa_db",
     ).await;
+
+    sqlx::migrate!()
+        .run(&store.clone().connection)
+        .await
+        .expect("Cannot run migration.");
+
     let store_filter = warp::any().map(move || store.clone());
 
     tracing_subscriber::fmt()
