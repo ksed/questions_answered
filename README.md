@@ -5,7 +5,7 @@
 1. Copy `/assets/postgres-setup/` files somewhere outside the project directory.
 2. Run `docker-compose up`.
 3. Wait for the postgres server to initialize, and which will create `/data` folder.
-4. In another terminal run `cat setup_tables.sh | docker exec -i postgresql bash`.
+4. In another terminal run `cat setup_tables.sh | docker exec -i postgresql bash` (optional with migrations).
 5. If the `setup_tables.sh` command is successful you should see two `CREATE TABLE` statements.
 6. Press Ctrl-C to exit the docker-exec context.
  
