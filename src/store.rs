@@ -37,11 +37,8 @@ impl Store {
         }
     }
 
-    pub async fn get_questions(
-        self,
-        limit: Option<i32>,
-        offset: i32
-    ) -> Result<Vec<Question>, Error> {
+    pub async fn get_questions(self, limit: Option<i32>, offset: i32)
+        -> Result<Vec<Question>, Error> {
         match sqlx::query("SELECT * from questions LIMIT $1 OFFSET $2")
             .bind(limit)
             .bind(offset)
@@ -56,10 +53,7 @@ impl Store {
             }
     }
 
-    pub async fn add_question(
-        &self,
-        new_question: NewQuestion
-    ) -> Result<Question, Error> {
+    pub async fn add_question(&self, new_question: NewQuestion) -> Result<Question, Error> {
         match sqlx::query(
             "INSERT INTO questions (title, content, tags)\
             VALUES ($1, $2, $3)\
@@ -79,11 +73,8 @@ impl Store {
             }
     }
 
-    pub async fn update_question(
-        &self,
-        question: Question,
-        question_id: i32
-    ) -> Result<Question, Error> {
+    pub async fn update_question(&self, question: Question, question_id: i32)
+        -> Result<Question, Error> {
         match sqlx::query(
             "UPDATE questions\
                 SET title = $1, content = $2, tags = $3\
@@ -110,10 +101,7 @@ impl Store {
             }
     }
 
-    pub async fn delete_question(
-        &self,
-        question_id: i32,
-    ) -> Result<bool, Error> {
+    pub async fn delete_question(&self, question_id: i32) -> Result<bool, Error> {
         match sqlx::query("DELETE FROM questions WHERE id = $1")
             .bind(question_id)
             .execute(&self.connection)
@@ -126,10 +114,7 @@ impl Store {
             }
     }
 
-    pub async fn add_answer(
-        &self,
-        new_answer: NewAnswer
-    ) -> Result<Answer, Error> {
+    pub async fn add_answer(&self, new_answer: NewAnswer) -> Result<Answer, Error> {
         match sqlx::query(
           "INSERT INTO answer (content, question_id) VALUES ($1, $2)"
         )

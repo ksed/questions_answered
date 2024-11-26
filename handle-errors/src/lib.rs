@@ -32,10 +32,10 @@ impl Reject for Error {}
 #[instrument]
 pub async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
     println!("Bad Request: {:?}.", r);
-    if let Some(crate::Error::DatabaseQueryError) = r.find() {
+    if let Some(Error::DatabaseQueryError) = r.find() {
         event!(Level::ERROR, "Database query error.");
         Ok(warp::reply::with_status(
-            crate::Error::DatabaseQueryError.to_string(),
+            Error::DatabaseQueryError.to_string(),
             StatusCode::UNPROCESSABLE_ENTITY
         ))
     } else if let Some(error) = r.find::<CorsForbidden>() {

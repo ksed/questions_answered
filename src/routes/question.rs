@@ -6,10 +6,8 @@ use tracing::{event, instrument, Level};
 use warp::http::StatusCode;
 
 #[instrument]
-pub async fn get_questions(
-    params: HashMap<String, String>,
-    store: Store,
-) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn get_questions(params: HashMap<String, String>, store: Store)
+    -> Result<impl warp::Reply, warp::Rejection> {
     event!(target: "questions_answered", Level::INFO, "querying questions");
     let mut pagination = Pagination::default();
 
@@ -24,10 +22,8 @@ pub async fn get_questions(
     }
 }
 
-pub async fn add_question(
-    store: Store,
-    new_question: NewQuestion
-) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn add_question(store: Store, new_question: NewQuestion)
+    -> Result<impl warp::Reply, warp::Rejection> {
     match store.add_question(new_question).await {
         Ok(_) => Ok(warp::reply::with_status(
             "Question added.",
@@ -37,21 +33,16 @@ pub async fn add_question(
     }
 }
 
-pub async fn update_question(
-    id: i32,
-    store: Store,
-    question: Question
-) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn update_question(id: i32, store: Store, question: Question)
+    -> Result<impl warp::Reply, warp::Rejection> {
     match store.update_question(question, id).await {
         Ok(res) => Ok(warp::reply::json(&res)),
         Err(e) => Err(warp::reject::custom(e)),
     }
 }
 
-pub async fn delete_question(
-    id: i32,
-    store: Store
-) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn delete_question(id: i32, store: Store)
+    -> Result<impl warp::Reply, warp::Rejection> {
     match store.delete_question(id).await {
         Ok(_) => Ok(warp::reply::with_status(
             format!("Question {} deleted.", id),
